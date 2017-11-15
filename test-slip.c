@@ -51,7 +51,7 @@ uint8_t slrecv(uint8_t c){
 }
 
 int main ( int argc, char **argv ) {
-	printf("- SLIP TEST PROGRAM -\n");
+	printf("- test-slip -\n");
 	//
 	fill_sendbuf();
 	dump(sendbuf, sizeof(sendbuf));
