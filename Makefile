@@ -2,7 +2,7 @@ LNAME=slip
 
 APP=test-slip test-zxslip
 #
-LIBSRC= slip.c zxslip.c
+LIBSRC= slip.c zxslip.c slipcrc8.c
 #
 LIBO=$(LIBSRC:.c=.o)
 LIBH=$(LIBSRC:.c=.h)

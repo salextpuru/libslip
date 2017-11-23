@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "slip.h"
+#include "slipcrc8.h"
 
 uint8_t sendbuf[0x100];
 uint8_t slipbuf[0x200];
@@ -54,6 +55,7 @@ int main ( int argc, char **argv ) {
 	printf("- test-slip -\n");
 	//
 	fill_sendbuf();
+	sendbuf[sizeof(sendbuf)-1] = slipcrc8buf(sendbuf, sizeof(sendbuf)-1);
 	dump(sendbuf, sizeof(sendbuf));
 	//
 	slipbufc=0;
@@ -64,6 +66,8 @@ int main ( int argc, char **argv ) {
 	slip_recv_init(&sr, slrecv, slbegin, slend );
 	slip_recv_buf(slipbuf, slipbufc, &sr);
 	dump(recbuf, recbufc);
+	printf("CRC8RECV=%.2X\n",slipcrc8buf(recbuf, recbufc-1));
+	printf("CRC8RECVBUF=%.2X\n",recbuf[recbufc-1]);
 	// diff
 	int i;
 	for( i=0; i<recbufc; i++ ){
