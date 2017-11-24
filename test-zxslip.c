@@ -38,7 +38,7 @@ int main ( int argc, char **argv ) {
 	uint8_t* ebuf=0;
 	printf("- test-zxslip -\n");
 	
-	//
+	/*
 	ebuf=zxslip_cr_gettxtinfo(cmdbuf);
 	printf("\nzxslip_cr_gettxtinfo:");dumpp(cmdbuf,ebuf);
 	
@@ -71,7 +71,7 @@ int main ( int argc, char **argv ) {
 	
 	ebuf=zxslip_cr_send(cmdbuf,0x04, "0123456", 7, 0xFF);
 	printf("\nzxslip_cr_send:");dumpp(cmdbuf,ebuf);
-	//
+	*/
 	
 	return 0;
 }

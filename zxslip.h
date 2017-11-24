@@ -103,6 +103,7 @@ typedef struct zxslip_qpkt_close{
 typedef struct zxslip_qpkt_fcntl{
 	uint8_t		fd_sock;
 	uint8_t		cmd_fcntl;
+	uint16_t	size;
 	uint8_t*	data;
 }zxslip_qpkt_fcntl;
 
@@ -192,6 +193,7 @@ typedef struct zxslip_apkt_fcntl{
 	int8_t		exit_code;
 	uint8_t		fd_sock;
 	uint8_t		cmd_fcntl;
+	uint16_t	size;
 	uint8_t*	data;
 }zxslip_apkt_fcntl;
 
@@ -233,19 +235,19 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size);
 
 /** --------------------- Функции создания команд --------------------- */
 
-#define zxslip_cr_gettxtinfo(buf) (zxslip_addheader(buf, zxslip_cmd_gettxtinfo, zxslip_getId()))
-#define zxslip_cr_esp_poll(buf) (zxslip_addheader(buf, zxslip_cmd_esp_poll, zxslip_getId()))
+uint8_t*  zxslip_crq_gettxtinfo(uint8_t* buf);
+uint8_t*  zxslip_crq_esp_poll(uint8_t* buf);
 
-uint8_t* zxslip_cr_wifi_config(uint8_t* buf, uint8_t mode, const char* name, const char* pass, uint8_t auth);
-#define	zxslip_cr_wifi_status(buf) (zxslip_addheader(buf, zxslip_cmd_wifi_status, zxslip_getId()))
+uint8_t* zxslip_crq_wifi_config(uint8_t* buf, zxslip_qpkt_wifi_config* p);
+uint8_t* zxslip_crq_wifi_status(uint8_t* buf);
 
-uint8_t* zxslip_cr_socket(uint8_t* buf, int8_t domain, int8_t type, int8_t protocol);
-uint8_t* zxslip_cr_close(uint8_t* buf, int8_t fd);
-uint8_t* zxslip_cr_fcntl(uint8_t* buf, int fd, int cmd, uint8_t* data, uint16_t size);
+uint8_t* zxslip_crq_socket(uint8_t* buf, zxslip_qpkt_socket* p);
+uint8_t* zxslip_crq_close(uint8_t* buf, zxslip_qpkt_close* p);
+uint8_t* zxslip_crq_fcntl(uint8_t* buf, zxslip_qpkt_fcntl* p);
 
-uint8_t* zxslip_cr_connect(uint8_t* buf, int8_t fd, uint8_t *addr, int16_t addrlen);
-uint8_t* zxslip_cr_recv(uint8_t* buf, int8_t fd, uint16_t len, int8_t flags);
-uint8_t* zxslip_cr_send(uint8_t* buf, int8_t fd, uint8_t* data, uint16_t len, int8_t flags);
+uint8_t* zxslip_crq_connect(uint8_t* buf, zxslip_qpkt_connect* p);
+uint8_t* zxslip_crq_recv(uint8_t* buf, zxslip_qpkt_recv* p);
+uint8_t* zxslip_crq_send(uint8_t* buf, zxslip_qpkt_send* p);
 /*
 uint8_t* zxslip_cr_bind
 uint8_t* zxslip_cr_listen

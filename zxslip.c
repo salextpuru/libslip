@@ -4,8 +4,8 @@
 static uint8_t sendpkt_id=0xAB;
 
 // Функция копирования с возвратом на конец строки
-static uint8_t* stpncpy_r(uint8_t *dest, uint8_t *src, uint16_t n){
-	while( (*src) && (n--) ){
+static uint8_t* stpncpy_r(uint8_t *dest, uint8_t *src, uint16_t n) {
+	while ( (*src) && (n--) ) {
 		*(src++) = *(dest++);
 	}
 	return src;
@@ -26,71 +26,84 @@ uint8_t* zxslip_addheader ( uint8_t* buf, uint8_t cmd, uint8_t id ) {
 	return buf;
 }
 
-uint8_t* zxslip_cr_wifi_config ( uint8_t* buf, uint8_t mode, const char* name, const char* pass, uint8_t auth ) {
+uint8_t*  zxslip_crq_gettxtinfo(uint8_t* buf) {
+	return zxslip_addheader ( buf, zxslip_cmd_gettxtinfo, zxslip_getId() );
+}
+
+uint8_t*  zxslip_crq_esp_poll(uint8_t* buf) {
+	return zxslip_addheader ( buf, zxslip_cmd_esp_poll, zxslip_getId() );
+}
+
+uint8_t* zxslip_crq_wifi_config(uint8_t* buf, zxslip_qpkt_wifi_config* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_wifi_config, zxslip_getId() );
-	* ( buf++ ) = mode;
-	* ( buf++ ) = auth;
-	while ( * ( buf++ ) =* ( name++ ) ) {}
-	while ( * ( buf++ ) =* ( pass++ ) ) {}
-	return buf;
+	* ( buf++ ) = p->auth;
+	* ( buf++ ) = p->mode;
+	return stpncpy_r( stpncpy_r( buf, p->name, 0x41 )+1, p->pass, 0x41 );
 }
 
-uint8_t* zxslip_cr_socket ( uint8_t* buf, int8_t domain, int8_t type, int8_t protocol ) {
+uint8_t* zxslip_crq_wifi_status(uint8_t* buf) {
+	return zxslip_addheader ( buf, zxslip_cmd_wifi_status, zxslip_getId() );
+}
+
+uint8_t* zxslip_crq_socket(uint8_t* buf, zxslip_qpkt_socket* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_socket, zxslip_getId() );
-	* ( buf++ ) = domain;
-	* ( buf++ ) = type;
-	* ( buf++ ) = protocol;
+	* ( buf++ ) = p->domain;
+	* ( buf++ ) = p->type;
+	* ( buf++ ) = p->protocol;
 	return buf;
 }
 
-uint8_t* zxslip_cr_close ( uint8_t* buf, int8_t fd ) {
+uint8_t* zxslip_crq_close(uint8_t* buf, zxslip_qpkt_close* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_close, zxslip_getId() );
-	* ( buf++ ) = fd;
+	* ( buf++ ) = p->fd_sock;
 	return buf;
 }
 
-uint8_t* zxslip_cr_fcntl ( uint8_t* buf, int fd, int cmd, uint8_t* data, uint16_t size ) {
+uint8_t* zxslip_crq_fcntl(uint8_t* buf, zxslip_qpkt_fcntl* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_fcntl, zxslip_getId() );
-	* ( buf++ ) = fd;
-	* ( buf++ ) = cmd;
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->cmd_fcntl;
+	* ( buf++ ) = p->size & 0xFF;
+	* ( buf++ ) = (p->size>>8) & 0xFF;
 	//
-	if ( ( !data ) || ( !size ) ) {
+	if ( ( !p->data ) || ( !p->size ) ) {
 		return buf;
 	}
 
-	memcpy ( buf,data,size );
-	buf+=size;
+	memcpy ( buf,p->data,p->size );
+	buf+=p->size;
 	return buf;
 }
 
-uint8_t* zxslip_cr_connect ( uint8_t* buf, int8_t fd, uint8_t *addr, int16_t addrlen ) {
-	buf = zxslip_addheader ( buf, zxslip_cmd_connect, zxslip_getId() );
-	* ( buf++ ) = fd;
-	memcpy ( buf,addr,addrlen );
-	buf+=addrlen;
+uint8_t* zxslip_crq_connect(uint8_t* buf, zxslip_qpkt_connect* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_fcntl, zxslip_getId() );
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->adrsize & 0xFF;
+	* ( buf++ ) = (p->adrsize>>8) & 0xFF;
+	memcpy ( buf, p->adr,p->adrsize );
+	buf+=p->adrsize;
 	return buf;
 }
 
-uint8_t* zxslip_cr_recv ( uint8_t* buf, int8_t fd, uint16_t len, int8_t flags ) {
+uint8_t* zxslip_crq_recv(uint8_t* buf, zxslip_qpkt_recv* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_recv, zxslip_getId() );
-	* ( buf++ ) = fd;
-	* ( buf++ ) = flags;
-	* ( buf++ ) = len&0xff;
-	* ( buf++ ) = ( len>>8 ) &0xff;
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->flags;
+	* ( buf++ ) = p->size & 0xff;
+	* ( buf++ ) = ( p->size>>8 ) & 0xff;
 	return buf;
 }
 
-uint8_t* zxslip_cr_send ( uint8_t* buf, int8_t fd, uint8_t* data, uint16_t len, int8_t flags ) {
+uint8_t* zxslip_crq_send(uint8_t* buf, zxslip_qpkt_send* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_send, zxslip_getId() );
-	* ( buf++ ) = fd;
-	* ( buf++ ) = flags;
-	* ( buf++ ) = len&0xff;
-	* ( buf++ ) = ( len>>8 ) &0xff;
-	memcpy ( buf,data,len );
-	buf+=len;
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->flags;
+	* ( buf++ ) = p->size & 0xff;
+	* ( buf++ ) = ( p->size >> 8 ) & 0xff;
+	memcpy ( buf, p->data, p->size );
+	buf+=p->size;
 	return buf;
 }
-
 
 /** --------------------- Функции парсинга запросов --------------------- */
 
@@ -123,7 +136,7 @@ void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
 		p.mode = *(buf+1);
 		stpncpy_r(p.pass, stpncpy_r(p.name, buf+2, 0x41)+1, 0x41);
 		// Вызов обработчика
-		
+
 		//
 		break;
 	}
@@ -136,22 +149,25 @@ void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
 	case zxslip_cmd_socket: {
 		zxslip_qpkt_socket* p= (zxslip_qpkt_socket*)(buf);
 		// Вызов обработчика
-		
+
 		//
 		break;
 	}
 	case zxslip_cmd_close: {
 		zxslip_qpkt_close* p= (zxslip_qpkt_close*)(buf);
 		// Вызов обработчика
-		
+
 		//
 		break;
 	}
 	case zxslip_cmd_fcntl: {
-		zxslip_qpkt_fcntl* p= (zxslip_qpkt_fcntl*)(buf);
-		p->data=buf+2;
+		zxslip_qpkt_fcntl p;//= (zxslip_qpkt_fcntl*)(buf);
+		p.fd_sock = *(buf+0);
+		p.cmd_fcntl = *(buf+1);
+		p.size = (*(buf+3) << 8) + *(buf+2);
+		p.data=buf+4;
 		// Вызов обработчика
-		
+
 		//
 		break;
 	}
@@ -162,14 +178,14 @@ void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
 		p.adrsize = size-1;
 		p.adr=buf+3;
 		// Вызов обработчика
-		
+
 		//
 		break;
 	}
 	case zxslip_cmd_recv: {
 		zxslip_qpkt_recv* p= (zxslip_qpkt_recv*)(buf);
 		// Вызов обработчика
-		
+
 		//
 		break;
 	}
@@ -179,8 +195,8 @@ void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
 		p.flags = *(buf+1);
 		p.size = size-4;
 		p.data = buf+4;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
@@ -197,15 +213,15 @@ void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
 		// Пока не сделано
 		break;
 	}
-	default:{
+	default: {
 		// Unknown command!
 	}
-	
+
 	}
 }
 
 /** --------------------- Функции парсинга ответов --------------------- */
-void zxslip_answer_parse(uint8_t* buf, uint16_t size){
+void zxslip_answer_parse(uint8_t* buf, uint16_t size) {
 	// Ошибка косяковна
 	if ( size < sizeof ( zxslip_pkt_header ) ) {
 		return;
@@ -222,23 +238,23 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size){
 		zxslip_apkt_gettxtinfo p;
 		p.size = size;
 		p.text=buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
 	case zxslip_cmd_esp_poll: {
 		zxslip_apkt_esp_poll* p=(zxslip_apkt_esp_poll*)buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
 
 	case zxslip_cmd_wifi_config: {
 		zxslip_apkt_wifi_config* p=(zxslip_apkt_wifi_config*)buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
@@ -251,23 +267,23 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size){
 		p.auth = *(buf+2);
 		p.mode = *(buf+3);
 		stpncpy_r(p.pass, stpncpy_r(p.name, buf+4, 41)+1, 41);
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
 
 	case zxslip_cmd_socket: {
 		zxslip_apkt_socket* p=(zxslip_apkt_socket*)buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
 	case zxslip_cmd_close: {
 		zxslip_apkt_close* p=(zxslip_apkt_close*)buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
@@ -276,17 +292,17 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size){
 		p.exit_code = *(buf+0);
 		p.fd_sock = *(buf+1);
 		p.cmd_fcntl = *(buf+2);
-		p.data = buf+3;
-		// Вызов обработчика 
-		
+		p.data = buf+5;
+		// Вызов обработчика
+
 		//
 		break;
 	}
 
 	case zxslip_cmd_connect: {
 		zxslip_apkt_connect* p=(zxslip_apkt_connect*)buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
@@ -297,15 +313,15 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size){
 		p.flags = *(buf+2);
 		p.size = size-5;
 		p.data = buf+5;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
 	case zxslip_cmd_send: {
 		zxslip_apkt_send* p=(zxslip_apkt_send*)buf;
-		// Вызов обработчика 
-		
+		// Вызов обработчика
+
 		//
 		break;
 	}
@@ -322,9 +338,9 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size){
 		// Пока не сделано
 		break;
 	}
-	default:{
+	default: {
 		// Unknown command!
 	}
-	
+
 	}
 }
