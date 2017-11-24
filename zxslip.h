@@ -39,6 +39,16 @@ enum zxslip_cmd_ids{
 	zxslip_cmd_accept	= 0x22
 };
 
+
+/**
+* @brief Состояние сокета
+*/
+typedef struct SockStatus{
+	uint8_t	fd_sock;
+	uint8_t	error;
+	uint8_t	status;
+}SockStatus;
+
 /**
 * @brief Получить текущий идентификатор пакета
 * 
@@ -61,52 +71,84 @@ void zxslip_setId(uint8_t id);
 */
 uint8_t* zxslip_addheader(uint8_t* buf, uint8_t cmd, uint8_t id);
 
-
-/** --------------------- Функции создания команд --------------------- */
-
-#define zxslip_cr_gettxtinfo(buf) (zxslip_addheader(buf, zxslip_cmd_gettxtinfo, zxslip_getId()))
-#define zxslip_cr_esp_poll(buf) (zxslip_addheader(buf, zxslip_cmd_esp_poll, zxslip_getId()))
-
-uint8_t* zxslip_cr_wifi_config(uint8_t* buf, uint8_t mode, const char* name, const char* pass, uint8_t auth);
-#define	zxslip_cr_wifi_status(buf) (zxslip_addheader(buf, zxslip_cmd_wifi_status, zxslip_getId()))
-
-uint8_t* zxslip_cr_socket(uint8_t* buf, int8_t domain, int8_t type, int8_t protocol);
-uint8_t* zxslip_cr_close(uint8_t* buf, int8_t fd);
-uint8_t* zxslip_cr_fcntl(uint8_t* buf, int fd, int cmd, uint8_t* data, uint16_t size);
-
-uint8_t* zxslip_cr_connect(uint8_t* buf, int8_t fd, uint8_t *addr, int16_t addrlen);
-uint8_t* zxslip_cr_recv(uint8_t* buf, int8_t fd, uint16_t len, int8_t flags);
-uint8_t* zxslip_cr_send(uint8_t* buf, int8_t fd, uint8_t* data, uint16_t len, int8_t flags);
-/*
-uint8_t* zxslip_cr_bind
-uint8_t* zxslip_cr_listen
-uint8_t* zxslip_cr_accept
-*/
-
-/** --------------------- Функции парсинга команд --------------------- */
+/** --------------------- Функции парсинга --------------------- */
 
 /**
 * @brief Заголовок пакета
 */
 typedef struct zxslip_pkt_header{
+	uint8_t reserv0;
 	uint8_t cmd_code;
 	uint8_t id;
 }zxslip_pkt_header;
 
+/** --------------------- Функции парсинга запросов --------------------- */
+typedef struct zxslip_qpkt_wifi_config{
+	uint8_t		auth;
+	uint8_t		mode;
+	uint8_t		name[0x41];
+	uint8_t		pass[0x41];
+}zxslip_qpkt_wifi_config;
+
+typedef struct zxslip_qpkt_socket{
+	uint8_t		domain;
+	uint8_t		type;
+	uint8_t		protocol;
+}zxslip_qpkt_socket;
+
+typedef struct zxslip_qpkt_close{
+	uint8_t		fd_sock;
+}zxslip_qpkt_close;
+
+typedef struct zxslip_qpkt_fcntl{
+	uint8_t		fd_sock;
+	uint8_t		cmd_fcntl;
+	uint8_t*	data;
+}zxslip_qpkt_fcntl;
+
+typedef struct zxslip_qpkt_connect{
+	uint8_t		fd_sock;
+	uint16_t	adrsize;
+	uint8_t*	adr;
+}zxslip_qpkt_connect;
+
+typedef struct zxslip_qpkt_recv{
+	uint8_t		fd_sock;
+	uint8_t		flags;
+	uint16_t	size;
+}zxslip_qpkt_recv;
+
+typedef struct zxslip_qpkt_send{
+	uint8_t		fd_sock;
+	uint8_t		flags;
+	uint16_t	size;
+	uint8_t*	data;
+}zxslip_qpkt_send;
+
+/**
+* @brief Общая функция парсинга всех пакетов-запросов
+* 
+* @param buf - буфер с данными
+* @param size - размер данных
+*/
+void zxslip_query_parse(uint8_t* buf, uint16_t size);
+
+/** --------------------- Функции парсинга ответов --------------------- */
 /**
 * @brief Тело ответа на команду zxslip_cmd_gettxtinfo
 */
 typedef struct zxslip_apkt_gettxtinfo{
 	uint16_t	size;
-	uint8_t		text[zxslip_max_datalen];
+	uint8_t*	text;
 }zxslip_apkt_gettxtinfo;
 
 /**
 * @brief Тело ответа на команду zxslip_cmd_esp_poll
 */
 typedef struct zxslip_apkt_esp_poll{
+	uint8_t		wifi_status;
 	uint8_t		nsock;
-	uint8_t		sock_status[zxslip_max_sockets];
+	SockStatus	sock_status[zxslip_max_sockets];
 }zxslip_apkt_esp_poll;
 
 /**
@@ -125,8 +167,8 @@ typedef struct zxslip_apkt_wifi_status{
 	uint8_t		status;
 	uint8_t		auth;
 	uint8_t		mode;
-	uint8_t		name[0x40];
-	uint8_t		pass[0x40];
+	uint8_t		name[0x41];
+	uint8_t		pass[0x41];
 }zxslip_apkt_wifi_status;
 
 /**
@@ -150,7 +192,7 @@ typedef struct zxslip_apkt_fcntl{
 	int8_t		exit_code;
 	uint8_t		fd_sock;
 	uint8_t		cmd_fcntl;
-	uint8_t		data[zxslip_max_datalen];
+	uint8_t*	data;
 }zxslip_apkt_fcntl;
 
 /**
@@ -168,7 +210,7 @@ typedef struct zxslip_apkt_recv{
 	uint8_t		fd_sock;
 	uint8_t		flags;
 	uint16_t	size;
-	uint8_t		data[zxslip_max_datalen];
+	uint8_t*	data;
 }zxslip_apkt_recv;
 
 /**
@@ -176,8 +218,59 @@ typedef struct zxslip_apkt_recv{
 */
 typedef struct zxslip_apkt_send{
 	int8_t		exit_code;
+	uint8_t		fd_sock;
+	uint8_t		flags;
+	uint16_t	size;
 }zxslip_apkt_send;
 
+/**
+* @brief Общая функция парсинга всех пакетов-ответов
+* 
+* @param buf - буфер с данными
+* @param size - размер данных
+*/
+void zxslip_answer_parse(uint8_t* buf, uint16_t size);
 
+/** --------------------- Функции создания команд --------------------- */
+
+#define zxslip_cr_gettxtinfo(buf) (zxslip_addheader(buf, zxslip_cmd_gettxtinfo, zxslip_getId()))
+#define zxslip_cr_esp_poll(buf) (zxslip_addheader(buf, zxslip_cmd_esp_poll, zxslip_getId()))
+
+uint8_t* zxslip_cr_wifi_config(uint8_t* buf, uint8_t mode, const char* name, const char* pass, uint8_t auth);
+#define	zxslip_cr_wifi_status(buf) (zxslip_addheader(buf, zxslip_cmd_wifi_status, zxslip_getId()))
+
+uint8_t* zxslip_cr_socket(uint8_t* buf, int8_t domain, int8_t type, int8_t protocol);
+uint8_t* zxslip_cr_close(uint8_t* buf, int8_t fd);
+uint8_t* zxslip_cr_fcntl(uint8_t* buf, int fd, int cmd, uint8_t* data, uint16_t size);
+
+uint8_t* zxslip_cr_connect(uint8_t* buf, int8_t fd, uint8_t *addr, int16_t addrlen);
+uint8_t* zxslip_cr_recv(uint8_t* buf, int8_t fd, uint16_t len, int8_t flags);
+uint8_t* zxslip_cr_send(uint8_t* buf, int8_t fd, uint8_t* data, uint16_t len, int8_t flags);
+/*
+uint8_t* zxslip_cr_bind
+uint8_t* zxslip_cr_listen
+uint8_t* zxslip_cr_accept
+*/
+
+/** --------------------- Функции создания ответов --------------------- */
+uint8_t* zxslip_cra_gettxtinfo(uint8_t* buf, zxslip_apkt_gettxtinfo* p);
+uint8_t*zxslip_cra_esp_poll(uint8_t* buf, zxslip_apkt_esp_poll* p);
+
+uint8_t* zxslip_cra_wifi_config(uint8_t* buf, zxslip_apkt_wifi_config* p);
+uint8_t* zxslip_cra_wifi_status(uint8_t* buf, zxslip_apkt_wifi_status* p);
+
+uint8_t* zxslip_cra_socket(uint8_t* buf, zxslip_apkt_socket* p);
+uint8_t* zxslip_cra_close(uint8_t* buf, zxslip_apkt_close* p);
+uint8_t* zxslip_cra_fcntl(uint8_t* buf, zxslip_apkt_fcntl* p);
+
+uint8_t* zxslip_cra_connect(uint8_t* buf, zxslip_apkt_connect* p);
+uint8_t* zxslip_cra_recv(uint8_t* buf, zxslip_apkt_recv* p);
+uint8_t* zxslip_cra_send(uint8_t* buf, zxslip_apkt_send* p);
+
+/*
+uint8_t* zxslip_cra_bind
+uint8_t* zxslip_cra_listen
+uint8_t* zxslip_cra_accept
+*/
 
 #endif /* __ZXSLIP_H__ */
