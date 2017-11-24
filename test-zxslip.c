@@ -2,11 +2,10 @@
 #include <stdio.h>
 #include <fcntl.h>
 #include <unistd.h>
+#include <string.h>
 #include <stdint.h>
 
 #include "zxslip.h"
-
-uint8_t cmdbuf[0x400];
 
 void dump(uint8_t* buf, uint16_t size ){
 	int line=0;
@@ -34,9 +33,42 @@ void dumpp(uint8_t* buf, uint8_t* ebuf){
 	printf("\n");
 }
 
+/**---- Буфера запросов и ответов ---- */
+
+static uint8_t qbuf[0x400];
+static uint8_t abuf[0x400];
+
+/**---- Тесты ---- */
+
+static int test_gettxtinfo(){
+	printf("---- gettxtinfo ----\n");
+	
+	// query have no data
+	zxslip_apkt_gettxtinfo answer_s;
+	zxslip_apkt_gettxtinfo answer_r;
+	
+	printf("---- query (no query data)----\n");
+	uint8_t* ebuf=zxslip_crq_gettxtinfo(qbuf);
+	dumpp(qbuf,ebuf);
+	
+	printf("---- answer (no query data)----\n");
+	printf("---- Send:\n");
+	answer_s.text="Test of debug gettxtinfo";
+	answer_s.size=strlen(answer_s.text)+1;
+	ebuf=zxslip_cra_gettxtinfo(qbuf,&answer_s);
+	printf("answer.text=%s\nanswer.size=0x%X\n",answer_s.text,answer_s.size);
+	dumpp(qbuf,ebuf);
+	printf("---- Recv:\n");
+	
+	
+	
+	return 0;
+}
+
+/**--------------------------------------------------------------- */
+
 int main ( int argc, char **argv ) {
-	uint8_t* ebuf=0;
-	printf("- test-zxslip -\n");
+	test_gettxtinfo();
 	
 	/*
 	ebuf=zxslip_cr_gettxtinfo(cmdbuf);
