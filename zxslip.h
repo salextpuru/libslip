@@ -149,7 +149,7 @@ typedef struct zxslip_apkt_gettxtinfo{
 typedef struct zxslip_apkt_esp_poll{
 	uint8_t		wifi_status;
 	uint8_t		nsock;
-	SockStatus	sock_status[zxslip_max_sockets];
+	SockStatus*	sock_status;
 }zxslip_apkt_esp_poll;
 
 /**
@@ -157,7 +157,7 @@ typedef struct zxslip_apkt_esp_poll{
 */
 typedef struct zxslip_apkt_wifi_config{
 	int8_t		exit_code;
-	uint8_t		status;
+	uint8_t		wifi_status;
 }zxslip_apkt_wifi_config;
 
 /**
@@ -165,7 +165,7 @@ typedef struct zxslip_apkt_wifi_config{
 */
 typedef struct zxslip_apkt_wifi_status{
 	int8_t		exit_code;
-	uint8_t		status;
+	uint8_t		wifi_status;
 	uint8_t		auth;
 	uint8_t		mode;
 	uint8_t		name[0x41];

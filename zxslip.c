@@ -81,7 +81,7 @@ uint8_t* zxslip_crq_wifi_config(uint8_t* buf, zxslip_qpkt_wifi_config* p) {
 	buf = zxslip_addheader ( buf, zxslip_cmd_wifi_config, zxslip_getId() );
 	* ( buf++ ) = p->auth;
 	* ( buf++ ) = p->mode;
-	return stpncpy_r( stpncpy_r( buf, p->name, 0x41 )+1, p->pass, 0x41 );
+	return stpncpy_r( stpncpy_r( buf, p->name, 0x41 )+1, p->pass, 0x41 )+1;
 }
 
 uint8_t* zxslip_crq_wifi_status(uint8_t* buf) {
@@ -161,6 +161,100 @@ uint8_t* zxslip_cra_gettxtinfo(uint8_t* buf, zxslip_apkt_gettxtinfo* p) {
 
 	memcpy ( buf,p->text,p->size );
 	buf+=p->size;
+	return buf;
+}
+
+uint8_t*zxslip_cra_esp_poll(uint8_t* buf, zxslip_apkt_esp_poll* p) {
+	uint16_t sock_status_size = p->nsock * sizeof(SockStatus);
+	buf = zxslip_addheader ( buf, zxslip_cmd_esp_poll, zxslip_getId() );
+	* ( buf++ ) = p->wifi_status;
+	* ( buf++ ) = p->nsock;
+	if( p->nsock ){
+		memcpy ( buf,p->sock_status , sock_status_size );
+		buf += sock_status_size;
+	}
+	return buf;
+}
+
+uint8_t* zxslip_cra_wifi_config(uint8_t* buf, zxslip_apkt_wifi_config* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_wifi_config, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	* ( buf++ ) = p->wifi_status;
+	return buf;
+}
+
+uint8_t* zxslip_cra_wifi_status(uint8_t* buf, zxslip_apkt_wifi_status* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_wifi_status, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	* ( buf++ ) = p->wifi_status;
+	* ( buf++ ) = p->auth;
+	* ( buf++ ) = p->mode;
+	
+	return stpncpy_r( stpncpy_r( buf, p->name, 0x41 )+1, p->pass, 0x41 )+1;
+}
+
+uint8_t* zxslip_cra_socket(uint8_t* buf, zxslip_apkt_socket* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_socket, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	return buf;
+}
+
+uint8_t* zxslip_cra_close(uint8_t* buf, zxslip_apkt_close* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_close, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	return buf;
+}
+
+uint8_t* zxslip_cra_fcntl(uint8_t* buf, zxslip_apkt_fcntl* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_fcntl, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->cmd_fcntl;
+	* ( buf++ ) = p->size & 0xFF;
+	* ( buf++ ) = (p->size>>8) & 0xFF;
+	//
+	if ( ( !p->data ) || ( !p->size ) ) {
+		return buf;
+	}
+
+	memcpy ( buf,p->data,p->size );
+	buf+=p->size;
+	return buf;
+}
+
+uint8_t* zxslip_cra_connect(uint8_t* buf, zxslip_apkt_connect* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_connect, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	return buf;
+}
+
+uint8_t* zxslip_cra_recv(uint8_t* buf, zxslip_apkt_recv* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_recv, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->flags;
+	
+	* ( buf++ ) = p->size & 0xFF;
+	* ( buf++ ) = (p->size>>8) & 0xFF;
+	//
+	if ( ( !p->data ) || ( !p->size ) ) {
+		return buf;
+	}
+	
+	memcpy ( buf,p->data,p->size );
+	buf+=p->size;
+	return buf;
+}
+
+uint8_t* zxslip_cra_send(uint8_t* buf, zxslip_apkt_send* p) {
+	buf = zxslip_addheader ( buf, zxslip_cmd_send, zxslip_getId() );
+	* ( buf++ ) = p->exit_code;
+	* ( buf++ ) = p->fd_sock;
+	* ( buf++ ) = p->flags;
+	
+	* ( buf++ ) = p->size & 0xFF;
+	* ( buf++ ) = (p->size>>8) & 0xFF;
+	
 	return buf;
 }
 
@@ -325,7 +419,7 @@ void zxslip_answer_parse(uint8_t* buf, uint16_t size) {
 		zxslip_apkt_wifi_status p;
 		memset(&p,0,sizeof(p));
 		p.exit_code = *(buf+0);
-		p.status = *(buf+1);
+		p.wifi_status = *(buf+1);
 		p.auth = *(buf+2);
 		p.mode = *(buf+3);
 		stpncpy_r(p.pass, stpncpy_r(p.name, buf+4, 41)+1, 41);
