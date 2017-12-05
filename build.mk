@@ -1,5 +1,5 @@
 # Library Name
-LIBNAME=lib$(LNAME).lib
+LIBNAME=libslip.lib
 
 # Object files
 OBJS=slip.rel  slipcrc8.rel  zxslip.rel
