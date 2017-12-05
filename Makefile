@@ -1,6 +1,6 @@
 LNAME=slip
 
-APP=test-slip test-zxslip
+TESTS=test-slip test-zxslip
 #
 LIBSRC= slip.c zxslip.c slipcrc8.c
 #
@@ -8,18 +8,34 @@ LIBO=$(LIBSRC:.c=.o)
 LIBH=$(LIBSRC:.c=.h)
 #
 
-all: lib$(LNAME).a $(APP)
+all: libs$(CPU_TYPE)
+	@echo "All done LIBS"
+	
 
-test-slip: lib$(LNAME).a test-slip.c
-	$(CC) -o $@ $@.c -I ./ -L ./ -l slip
+libs: lib$(LNAME).a
+	@echo "Libs DEFAULT"
 
-test-zxslip: lib$(LNAME).a  test-zxslip.c
-	$(CC) -o $@ $@.c -I ./ -L ./ -l slip
+libsz80:
+	make -f Makefile.z80
+	@echo "Libs Z80"
+
+test: all test-slip test-zxslip
+	@echo "All done TESTS"
+
+test-slip: lib$(LNAME).a test/test-slip.c
+	$(CC) -o $@ test/$@.c -I ./ -L ./ -l slip
+
+test-zxslip: lib$(LNAME).a  test/test-zxslip.c
+	$(CC) -o $@ test/$@.c -I ./ -L ./ -l slip
 
 lib$(LNAME).a:  $(LIBSRC) $(LIBH)
 	$(CC) -c $(LIBSRC)
 	$(AR) ar rcs lib$(LNAME).a $(LIBO)
 
-clean:
-	rm -f $(APP) lib$(LNAME).a *.o
+clean: clean-t$(CPU_TYPE)
 
+clean-t:
+	rm -f $(TESTS) lib$(LNAME).a *.o
+
+clean-tz80:
+	make -f Makefile.z80 clean

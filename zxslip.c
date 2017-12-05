@@ -261,13 +261,14 @@ uint8_t* zxslip_cra_send(uint8_t* buf, zxslip_apkt_send* p) {
 /** --------------------- Функции парсинга запросов --------------------- */
 
 void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
+	zxslip_pkt_header* h= ( zxslip_pkt_header* ) buf;
+	
 	// Ошибка косяковна
 	if ( size < sizeof ( zxslip_pkt_header ) ) {
 		return;
 	}
 
 	// Заголовок (он передаётся в функцию обратного вызова всегда)
-	zxslip_pkt_header* h= ( zxslip_pkt_header* ) buf;
 	buf+=sizeof(zxslip_pkt_header);
 	size-=sizeof(zxslip_pkt_header);
 
@@ -378,13 +379,14 @@ void zxslip_query_parse ( uint8_t* buf, uint16_t size ) {
 
 /** --------------------- Функции парсинга ответов --------------------- */
 void zxslip_answer_parse(uint8_t* buf, uint16_t size) {
+	zxslip_pkt_header* h= ( zxslip_pkt_header* ) buf;
+	
 	// Ошибка косяковна
 	if ( size < sizeof ( zxslip_pkt_header ) ) {
 		return;
 	}
 
 	// Заголовок (он передаётся в функцию обратного вызова всегда)
-	zxslip_pkt_header* h= ( zxslip_pkt_header* ) buf;
 	buf+=sizeof(zxslip_pkt_header);
 	size-=sizeof(zxslip_pkt_header);
 
