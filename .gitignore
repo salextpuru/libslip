@@ -44,8 +44,6 @@ core
 
 lost+found
 
-test
-
 *.asm
 *.rel
 *.lst
