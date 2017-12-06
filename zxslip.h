@@ -275,4 +275,45 @@ uint8_t* zxslip_cra_listen
 uint8_t* zxslip_cra_accept
 */
 
+/** --------------------- Функции обратного вызова запросов --------------------- */
+extern void (*zxslip_q_gettxtinfo_cb)(zxslip_pkt_header* h);
+extern void  (*zxslip_q_esp_poll_cb)(zxslip_pkt_header* h);
+
+extern void (*zxslip_q_wifi_config_cb)(zxslip_pkt_header* h, zxslip_qpkt_wifi_config* p);
+extern void (*zxslip_q_wifi_status_cb)(zxslip_pkt_header* h);
+
+extern void (*zxslip_q_socket_cb)(zxslip_pkt_header* h, zxslip_qpkt_socket* p);
+extern void (*zxslip_q_close_cb)(zxslip_pkt_header* h, zxslip_qpkt_close* p);
+extern void (*zxslip_q_fcntl_cb)(zxslip_pkt_header* h, zxslip_qpkt_fcntl* p);
+
+extern void (*zxslip_q_connect_cb)(zxslip_pkt_header* h, zxslip_qpkt_connect* p);
+extern void (*zxslip_q_recv_cb)(zxslip_pkt_header* h, zxslip_qpkt_recv* p);
+extern void (*zxslip_q_send_cb)(zxslip_pkt_header* h, zxslip_qpkt_send* p);
+/*
+uint8_t* zxslip_cr_bind
+uint8_t* zxslip_cr_listen
+uint8_t* zxslip_cr_accept
+*/
+
+/** --------------------- Функции обратного вызова ответов --------------------- */
+extern void (*zxslip_a_gettxtinfo_cb)(zxslip_pkt_header* h, zxslip_apkt_gettxtinfo* p);
+extern void (*zxslip_a_esp_poll_cb)(zxslip_pkt_header* h, zxslip_apkt_esp_poll* p);
+
+extern void (*zxslip_a_wifi_config_cb)(zxslip_pkt_header* h, zxslip_apkt_wifi_config* p);
+extern void (*zxslip_a_wifi_status_cb)(zxslip_pkt_header* h, zxslip_apkt_wifi_status* p);
+
+extern void (*zxslip_a_socket_cb)(zxslip_pkt_header* h, zxslip_apkt_socket* p);
+extern void (*zxslip_a_close_cb)(zxslip_pkt_header* h, zxslip_apkt_close* p);
+extern void (*zxslip_a_fcntl_cb)(zxslip_pkt_header* h, zxslip_apkt_fcntl* p);
+
+extern void (*zxslip_a_connect_cb)(zxslip_pkt_header* h, zxslip_apkt_connect* p);
+extern void (*zxslip_a_recv_cb)(zxslip_pkt_header* h, zxslip_apkt_recv* p);
+extern void (*zxslip_a_send_cb)(zxslip_pkt_header* h, zxslip_apkt_send* p);
+
+/*
+uint8_t* zxslip_cra_bind
+uint8_t* zxslip_cra_listen
+uint8_t* zxslip_cra_accept
+*/
+
 #endif /* __ZXSLIP_H__ */
