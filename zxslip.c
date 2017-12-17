@@ -167,12 +167,8 @@ uint8_t* zxslip_cra_gettxtinfo(uint8_t* buf, zxslip_apkt_gettxtinfo* p) {
 uint8_t*zxslip_cra_esp_poll(uint8_t* buf, zxslip_apkt_esp_poll* p) {
 	uint16_t sock_status_size = p->nsock * sizeof(SockStatus);
 	buf = zxslip_addheader ( buf, zxslip_cmd_esp_poll, zxslip_getId() );
-	* ( buf++ ) = p->wifi_status;
-	* ( buf++ ) = p->nsock;
-	if( p->nsock ){
-		memcpy ( buf,p->sock_status , sock_status_size );
-		buf += sock_status_size;
-	}
+	memcpy ( buf,p, sizeof(zxslip_apkt_esp_poll) );
+	buf+=sizeof(zxslip_apkt_esp_poll);
 	return buf;
 }
 

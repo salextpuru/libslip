@@ -149,7 +149,7 @@ typedef struct zxslip_apkt_gettxtinfo{
 typedef struct zxslip_apkt_esp_poll{
 	uint8_t		wifi_status;
 	uint8_t		nsock;
-	SockStatus*	sock_status;
+	SockStatus	sock_status[zxslip_max_sockets];
 }zxslip_apkt_esp_poll;
 
 /**
